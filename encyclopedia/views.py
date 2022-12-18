@@ -9,16 +9,24 @@ from . import util
 
 markdowner = markdown2.Markdown()
 
+#The form for a new entry
 class NewEntryForm(forms.Form):
     entry = forms.CharField(label="New Entry")
 
 def index(request):
+    '''
+    Outputs the home page with all list entries stored
+    '''
     return render(request, "encyclopedia/index.html", {
         "entries": util.list_entries(),
         "result_type": "All Pages"
     })
 
 def entry_info(request, entry):
+    '''
+    Get the entry and display it's contents on a page called entry.html
+    Does this by converting markdown content using Python library
+    '''
     if util.get_entry(entry):
         body = markdowner.convert(util.get_entry(entry))
         return render(request, "encyclopedia/entry.html", {
@@ -27,14 +35,21 @@ def entry_info(request, entry):
         })
     else:
         return render(request, "encyclopedia/404.html")
-    
+
 def search(request):
+    '''
+    Loop through all entries and check if search matches an entry
+    If yes, deliver the entry page and not a search results page
+    Else, return results page with all entries that cotain query as substring.
+    '''
     current_query = request.GET.get('q')
     all_entries = util.list_entries()
     result_entries = []
     
     for entry in all_entries:
-        if re.search(current_query.lower(), entry.lower()):
+        if current_query.lower() == entry.lower():
+            return entry_info(request, entry)
+        elif re.search(current_query.lower(), entry.lower()):
             result_entries.append(entry)
         else: pass
         
@@ -44,6 +59,16 @@ def search(request):
     })
     
 def add(request):
+    '''
+    Take request from add.html
+    If it's a first load with no post request, send standard add.html page
+    If it's a post method, take the content
+        If entry already exists within database, return a add.html with an error
+        that it already exists in the database
+        
+        Else, add it to the database with content of 'No content inserted yet'
+        and redirect the user to the home page
+    '''
     if request.method == "POST":
         form = NewEntryForm(request.POST)
         current_entries = util.list_entries()
