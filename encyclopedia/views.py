@@ -1,5 +1,5 @@
 from django.shortcuts import render
-from django.http import HttpResponse
+from django.http import HttpResponse, HttpResponseRedirect
 import markdown2
 import re
 
@@ -37,3 +37,16 @@ def search(request):
         "entries": result_entries,
         "result_type": f"Search results for '{current_query}'"
     })
+    
+def add(request):
+    if request.method == "POST":
+        entry_check = request.POST.get("new_entry")
+        current_entries = util.list_entries()
+        
+        for entry in current_entries:
+            if entry_check.lower() == entry.lower():
+                return HttpResponse("This already exists")
+        util.save_entry(entry_check, 'No content inserted yet...')
+        return render(request, "encyclopedia/index.html")
+            
+    return render(request, "encyclopedia/add.html")
