@@ -1,9 +1,10 @@
 from django.shortcuts import render
 from django import forms
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 from django.urls import reverse
 import markdown2
 import re
+import random
 
 from . import util
 
@@ -12,6 +13,9 @@ markdowner = markdown2.Markdown()
 #The form for a new entry
 class NewEntryForm(forms.Form):
     entry = forms.CharField(label="New Entry")
+    
+class NewEditingForm(forms.Form):
+    body_content = forms.CharField(widget=forms.Textarea(attrs={ "size":30 }), label="", initial="Test")
 
 def index(request):
     '''
@@ -88,3 +92,27 @@ def add(request):
         "form": NewEntryForm(),
         "error_message":""
     })
+    
+def edit(request, entry):
+    if request.method == "POST":
+        form = NewEditingForm(request.POST)
+        if form.is_valid():
+            body_form = form.cleaned_data["body_content"]
+            util.save_entry(entry, body_form)
+            return entry_info(request, entry)
+            
+    
+    elif util.get_entry(entry):
+        form = NewEditingForm()
+        form.fields['body_content'].initial = util.get_entry(entry)
+        return render(request, "encyclopedia/edit.html", {
+            "title":entry,
+            "body":form
+        })
+    else:
+        return render(request, "encyclopedia/404.html")
+    
+def random_entry(request):
+    all_entries = util.list_entries()
+    winner = random.choice(all_entries)
+    return entry_info(request, winner)
