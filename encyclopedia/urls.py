@@ -4,6 +4,7 @@ from . import views
 
 app_name = "encyclopedia"
 
+# All potential URLs
 urlpatterns = [
     path("", views.index, name="index"),
     path("wiki/<str:entry>", views.entry_info, name="entry"),
